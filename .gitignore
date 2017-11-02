@@ -1,0 +1,9 @@
+/.vs
+/mySpeechSynthesizer/obj
+/mySpeechSynthesizer/bin/Debug
+/mySpeechSynthesizer/bin/Release
+/nntest/obj
+/nntest/bin/Debug
+/nntest/bin/Release
+/SoundEditor/obj
+/SoundEditor/bin/Debug
