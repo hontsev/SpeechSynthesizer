@@ -63,7 +63,7 @@ namespace mySpeechSynthesizer
             double[] res = new double[pit.Length];
             for(int i = 0; i < res.Length; i++)
             {
-                res[i] = -changepos + pit[i];
+                res[i] = changepos + pit[i];
             }
             return res;
         }
