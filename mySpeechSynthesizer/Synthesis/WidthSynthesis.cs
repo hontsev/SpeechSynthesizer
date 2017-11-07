@@ -403,9 +403,12 @@ namespace mySpeechSynthesizer
                     tmp.Add(val);
                     nowpos += nowzip;
                 }
+                // 滤波
+                int[] tmp2 = MiddleFilterCorrection( tmp.ToArray(), 0, tmp.Count, oridata, Math.Max(0,fbegin), fend);
+                //tmp2 = FToneAnalysis.FrequencyFilter(tmp2, 0, 15000);
                 // 用汉宁窗合并
                 //var hanningtmp = tmp.ToArray();
-                var hanningtmp = hanning(tmp.ToArray());
+                var hanningtmp = hanning(tmp2.ToArray());
                 for (int j = 0; j < hanningtmp.Length; j++)
                 {
                     if (respos + j - cut[i - 1] + fbegin >= res.Length)
@@ -461,12 +464,12 @@ namespace mySpeechSynthesizer
 
             double[] fftdata1 = new double[dx];
             double[] fftdataimag1 = new double[dx];
-            Array.Copy(data1, begin1, fftdata1, 0, Math.Min(k, data1.Length - begin1));
+            Array.Copy(data1, begin1, fftdata1, 0, Math.Min(k, end1 - begin1));
             TWFFT.FFT(fftdata1, fftdataimag1);
 
             double[] fftdata2 = new double[dx];
             double[] fftdataimag2 = new double[dx];
-            Array.Copy(data2, begin2, fftdata2, 0, Math.Min(k, data2.Length - begin2));
+            Array.Copy(data2, begin2, fftdata2, 0, Math.Min(k, end2 - begin2));
             TWFFT.FFT(fftdata2, fftdataimag2);
 
             int num = 15;

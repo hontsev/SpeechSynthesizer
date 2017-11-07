@@ -423,7 +423,7 @@ namespace mySpeechSynthesizer
             //index.Add(0);
 
             int begin = getPassZeroBegin(data, 0);
-            return getCutList(data, begin, 220);
+            return getCutList(data, begin, 440);
 
             //return index.ToArray();
         }
