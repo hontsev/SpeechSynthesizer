@@ -60,7 +60,7 @@ namespace mySpeechSynthesizer
         /// </summary>
         /// <param name="directory">音源路径</param>
         /// <returns></returns>
-        public static NNTone[] getParamsFromNN(string directory)
+        public static NNTone[] getParams(string directory)
         {
             string file = directory + "inf.d";
             List<NNTone> res = new List<NNTone>();
@@ -87,10 +87,10 @@ namespace mySpeechSynthesizer
         /// </summary>
         /// <param name="directory"></param>
         /// <returns></returns>
-        public static ToneList getToneListFromNN(string directory)
+        public static ToneList getToneList(string directory)
         {
             
-            NNTone[] ntlist = getParamsFromNN(directory);
+            NNTone[] ntlist = getParams(directory);
             byte[] datas = readVoiceD(directory);
 
             ToneList tl = new ToneList(datas);

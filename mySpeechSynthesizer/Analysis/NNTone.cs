@@ -47,6 +47,11 @@ namespace mySpeechSynthesizer
         /// </summary>
         public int volume;
 
+        public NNTone()
+        {
+
+        }
+
         public NNTone(string oristr)
         {
             try

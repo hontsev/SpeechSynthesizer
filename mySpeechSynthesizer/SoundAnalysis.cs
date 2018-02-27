@@ -7,6 +7,12 @@ using System.Threading.Tasks;
 
 namespace mySpeechSynthesizer
 {
+
+    public enum SourceType
+    {
+        Niaoniao,UTAU,Vocaloid
+    }
+
     /// <summary>
     /// 分析主入口
     /// </summary>
@@ -22,10 +28,13 @@ namespace mySpeechSynthesizer
         /// 初始化音源
         /// </summary>
         /// <param name="directory"></param>
-        public void init(string directory)
+        public void init(string directory,SourceType type)
         {
-            this.tl = analysisAll(directory);
+
+            this.tl = analysisAll(directory,type);
         }
+
+        
 
         /// <summary>
         /// 根据音节信息得到其合成波形
@@ -76,23 +85,52 @@ namespace mySpeechSynthesizer
         }
 
 
+        /// <summary>
+        /// 将Tonelist转化为NNTone序列，用于debug的声音序列展示
+        /// </summary>
+        /// <param name="tl"></param>
+        /// <returns></returns>
+        public NNTone[] getNNTonesFromToneList()
+        {
+            List<NNTone> tones = new List<NNTone>();
+
+            foreach (var t in tl.tones)
+            {
+                string name = t.Key;
+                ToneUnit ft = t.Value;
+                NNTone tone = new NNTone();
+                tone.name = name;
+                tone.begin = ft.begin;
+                tone.length = ft.length;
+                tone.pitch = ft.pitch;
+                tones.Add(tone);
+            }
+
+            return tones.ToArray();
+        }
 
 
         /// <summary>
         /// 准备阶段。根据音源文件来切分基音段等
         /// </summary>
-        /// <param name="directory"></param>
+        /// <param name="path"></param>
+        /// <param name="type"></param>
         /// <returns></returns>
-        public static ToneList analysisAll(string directory)
+        public static ToneList analysisAll(string path, SourceType type)
         {
-            ToneList tl = NNAnalysis.getToneListFromNN(directory);
-           // List<string> keys = new List<string>();
-            //foreach (var key in tl.tones.Keys) keys.Add(key);
-            //for(int i = 0; i < keys.Count; i++)
-            //{
-            //    analysis(tl, keys[i]);
-            //}
-
+            ToneList tl = new ToneList(new byte[] { });
+            switch (type)
+            {
+                case SourceType.Niaoniao:
+                    tl = NNAnalysis.getToneList(path);
+                    break;
+                case SourceType.UTAU:
+                    tl = UTAUAnalysis.getToneList(path);
+                    break;
+                case SourceType.Vocaloid:
+                default:
+                    break;
+            }
             return tl;
         }
 
@@ -136,6 +174,7 @@ namespace mySpeechSynthesizer
             
             return res;
         }
+
 
     }
 

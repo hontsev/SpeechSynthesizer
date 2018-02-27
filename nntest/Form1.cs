@@ -19,9 +19,11 @@ namespace nntest
 {
     public partial class Form1 : Form
     {
+        Form2 f2;
         public Form1()
         {
             InitializeComponent();
+            f2 = new Form2();
         }
 
         NNTone[] sounds;
@@ -280,14 +282,14 @@ namespace nntest
         private void button1_Click(object sender, EventArgs e)
         {
             filepath = textBox1.Text + @"\";
-            sounds = NNAnalysis.getParamsFromNN(filepath);
+            sounds = NNAnalysis.getParams(filepath);
 
             //tl = SoundAnalysis.analysisAll(filepath);
             //WAVAnalyzer.writeWAV(readVoiceD());
 
             //tl = SoundAnalysis.analysisAll(filepath);
             sa = new SoundAnalysis();
-            sa.init(filepath);
+            sa.init(filepath,SourceType.Niaoniao);
             listBox1.Items.Clear();
             for (int i = 0; i < sounds.Length; i++)
             {
@@ -326,7 +328,8 @@ namespace nntest
 
         public void showSoundInfo(int n)
         {
-            WAVControl.writeWAV(NNAnalysis.readVoiceD(filepath, sounds[n].begin, sounds[n].length), outputOri);
+            var data = sa.tl.getTone(sounds[n].name);
+            WAVControl.writeWAV(data, outputOri);
 
             System.Media.SoundPlayer player = new System.Media.SoundPlayer(outputOri);
             player.Play();
@@ -337,7 +340,7 @@ namespace nntest
             //player2.PlaySync();
             //double tbegin = double.Parse(textBox5.Text);
             //double tend = double.Parse(textBox6.Text);
-            var data = sa.tl.getTone(sounds[n].name);
+            
             pictureBox1.Image = getImage(data);
             pictureBox3.Image = getFFTImage(data);
         }
@@ -445,8 +448,8 @@ namespace nntest
 
         private void button2_Click(object sender, EventArgs e)
         {
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
+            //Stopwatch sw = new Stopwatch();
+            //sw.Start();
             //获取声调名称
             int toneindex = listBox1.SelectedIndex;
             if (toneindex < 0) return;
@@ -475,21 +478,57 @@ namespace nntest
             SynTone synt = new SynTone(tonename, pitdata, len, new double[] { 1 }, 0, pitch);
             int[] res = sa.getSoundTone(synt);
             this.pictureBox2.Image = getImage(res);
-            this.pictureBox4.Image = getFFTImage(res);
-            sw.Stop();
-            sw = new Stopwatch();
-            sw.Start();
+            //this.pictureBox4.Image = getFFTImage(res);
+            //sw.Stop();
+            //sw = new Stopwatch();
+            //sw.Start();
             WAVControl.writeWAV(res, outputTone);
 
             //播放合成结果wav
             System.Media.SoundPlayer player = new System.Media.SoundPlayer(outputTone);
+            
             player.PlaySync();
-            sw.Stop();
+            //sw.Stop();
             //double tbegin = double.Parse(textBox5.Text);
             //double tend = double.Parse(textBox6.Text);
             //pictureBox2.Image = getImage(outputTone, tbegin, tend);
             //pictureBox4.Image = getFFTImage(SoundAnalysis.getSample(outputTone));
         }
 
+        private void button4_Click(object sender, EventArgs e)
+        {
+            f2.Show();
+        }
+
+
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            filepath = textBox1.Text + @"\";
+            
+
+            //tl = SoundAnalysis.analysisAll(filepath);
+            //WAVAnalyzer.writeWAV(readVoiceD());
+
+            //tl = SoundAnalysis.analysisAll(filepath);
+            sa = new SoundAnalysis();
+            sa.init(filepath, SourceType.UTAU);
+
+            sounds = sa.getNNTonesFromToneList();
+
+            listBox1.Items.Clear();
+            for (int i = 0; i < sounds.Length; i++)
+            {
+                listBox1.Items.Add(sounds[i].name);
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            string text = textBox2.Text;
+            PinYinConverter pyc = new PinYinConverter();
+            var res=pyc.getPinYinList(text);
+            //var res2 = res;
+        }
     }
 }

@@ -7,3 +7,6 @@
 /nntest/bin/Release
 /SoundEditor/obj
 /SoundEditor/bin/Debug
+/packages
+/*.suo
+/mySpeechSynthesizer/*.csproj
