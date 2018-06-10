@@ -63,7 +63,7 @@ namespace mySpeechSynthesizer
         {
             int k = data.Length;
             int dx = getmin2x(k);
-            double dl = (double)NNAnalysis.samplingRate/ dx;
+            double dl = (double)NNLink.NBankManager.samplingRate/ dx;
             double[] data1 = new double[dx];
             double[] dataimag1 = new double[dx];
             Array.Copy(data, data1, k);
@@ -283,15 +283,16 @@ namespace mySpeechSynthesizer
                 //if (tmp2 * tmp3 == 0) rm[i] = 0;
                 //else rm[i] = Math.Max(Math.Min(tmp1 / Math.Sqrt(tmp2 * tmp3), 1.0), 0.0);
             }
-            // 中值滤波来平滑周期
+            // 中值滤波来平滑周期，去除离群点
             var tmparray = MiddleFilter(tmpcuts.ToArray(),3);
             int minc = getMiddle(tmparray, 0.4);
 
             // 选择周期中最大值附近的参数作为切割点
             int baseindex = getMaxIndex(data, beginx+window/2, window / 2);
 
-            cuts.Add(0);
+            
             cuts.Add(baseindex);
+            //对每个周期点的起始位置微调，调整至峰值点作为基音标记位置
             for (int i = 0; i < tmparray.Length; i++)
             {
                 //if (tmparray[i] < minc && minc-tmparray[i]>10) { baseindex += tmparray[i]; continue; }
@@ -303,12 +304,63 @@ namespace mySpeechSynthesizer
 
                 
             }
+            
+
+            //对开头清音段插入一些标记位
+            List<int> qcuts = new List<int>();
+            int index = 0;
+            int end = cuts[0];
+            while (true)
+            {
+                if (end - index >= 2 * minc)
+                {
+                    // add cut
+                    index += minc;
+                    qcuts.Add(index);
+                } else if (end - index >= 1.5 * minc)
+                {
+                    index += (end - index) / 2;
+                    qcuts.Add(index);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            for(int i = qcuts.Count - 1; i >= 0; i--)
+            {
+                cuts.Insert(0, qcuts[i]);
+            }
+
+            //对结尾插入清音分割位
+            index = cuts.Last();
+            end = data.Length;
+            while (true)
+            {
+                if (end - index >= 2 * minc)
+                {
+                    // add cut
+                    index += minc;
+                    cuts.Add(index);
+                }
+                else if (end - index >= 1.5 * minc)
+                {
+                    index += (end - index) / 2;
+                    cuts.Add(index);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            cuts.Insert(0,0);
             cuts.Add(data.Length);
             return cuts.ToArray();
         }
 
         /// <summary>
-        /// 短时过零率
+        /// 用短时过零率判断起始位置。
+        /// 用于判断浊音开始位置
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
@@ -346,16 +398,16 @@ namespace mySpeechSynthesizer
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static int[] getSoundPart(int[] data)
+        public static int[] getSoundPart(int[] data,int therehold=100000)
         {
             
             int beginx = 0;
             int endx = 0;
             double[] energy = Energy(data);
 
-            double ave = getMiddle(energy, 0.2);
-            ave *= 0.2;
-            ave = Math.Max(ave, 10000);
+            double ave = getMiddle(energy, 0.1);
+            //ave *= 0.5;
+            ave = Math.Max(ave, therehold);
             
 
             int len = 3;
@@ -423,6 +475,7 @@ namespace mySpeechSynthesizer
             //index.Add(0);
 
             int begin = getPassZeroBegin(data, 0);
+
             return getCutList(data, begin, 440);
 
             //return index.ToArray();

@@ -13,7 +13,7 @@ namespace mySpeechSynthesizer
     {
         public string name;
         public int length;
-        public double[] pit;
+        public double[][] pit;
         public double[] volume;
 
         public double pitch;
@@ -38,7 +38,7 @@ namespace mySpeechSynthesizer
             isSynFinish = true;
             pitch = 0;
             length = 1000;
-            pit = new double[] { 1 };
+            pit = new double[][] { new double[] { 0.5, 1 } };
             volume = new double[] { 1 };
             data = new int[] { };
         }
@@ -52,7 +52,7 @@ namespace mySpeechSynthesizer
         /// <param name="volume"></param>
         /// <param name="begin"></param>
         /// <param name="pitch"></param>
-        public SynTone(string name, double[] pit,int length,double[] volume,int begin,double pitch)
+        public SynTone(string name, double[][] pit,int length,double[] volume,int begin,double pitch)
         {
             isSynFinish = false;
             this.name = name;

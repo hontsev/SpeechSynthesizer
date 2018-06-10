@@ -1,0 +1,15 @@
+D:\CProjects\mySpeechSynthesizer\SSTester\obj\Debug\SSTester.csprojResolveAssemblyReference.cache
+D:\CProjects\mySpeechSynthesizer\SSTester\obj\Debug\nntest.Form1.resources
+D:\CProjects\mySpeechSynthesizer\SSTester\obj\Debug\nntest.Form2.resources
+D:\CProjects\mySpeechSynthesizer\SSTester\obj\Debug\SSTester.Properties.Resources.resources
+D:\CProjects\mySpeechSynthesizer\SSTester\obj\Debug\SSTester.csproj.GenerateResource.cache
+D:\CProjects\mySpeechSynthesizer\SSTester\obj\Debug\SSTester.csproj.CoreCompileInputs.cache
+D:\CProjects\mySpeechSynthesizer\SSTester\bin\Debug\SSTester.exe.config
+D:\CProjects\mySpeechSynthesizer\SSTester\bin\Debug\SSTester.exe
+D:\CProjects\mySpeechSynthesizer\SSTester\bin\Debug\SSTester.pdb
+D:\CProjects\mySpeechSynthesizer\SSTester\bin\Debug\mySpeechSynthesizer.dll
+D:\CProjects\mySpeechSynthesizer\SSTester\bin\Debug\ChnCharInfo.dll
+D:\CProjects\mySpeechSynthesizer\SSTester\bin\Debug\mySpeechSynthesizer.pdb
+D:\CProjects\mySpeechSynthesizer\SSTester\obj\Debug\SSTester.csproj.CopyComplete
+D:\CProjects\mySpeechSynthesizer\SSTester\obj\Debug\SSTester.exe
+D:\CProjects\mySpeechSynthesizer\SSTester\obj\Debug\SSTester.pdb

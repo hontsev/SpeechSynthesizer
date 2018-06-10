@@ -1,4 +1,5 @@
-﻿using System;
+﻿using mySpeechSynthesizer.NNLink;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -50,121 +51,19 @@ namespace mySpeechSynthesizer
             return res;
         }
 
-        /// <summary>
-        /// 根据pitch数值，确定新的pit参数序列。
-        /// </summary>
-        /// <param name="pit"></param>
-        /// <param name="oldpitch"></param>
-        /// <param name="newpitch"></param>
-        /// <returns></returns>
-        private static double[] getNewPit(double[] pit, double oldpitch, double newpitch)
+        public static int[] getWAVdata(Bank tl,string tonename, double[][] pit, int length,double pitch)
         {
-            double changepos = newpitch / oldpitch-1;
-            double[] res = new double[pit.Length];
-            for(int i = 0; i < res.Length; i++)
-            {
-                res[i] = changepos + pit[i];
-            }
-            return res;
-        }
-
-        public static int[] getWAVdata(ToneList tl,string tonename, double[] pit, int length,double pitch)
-        {
-            pit = getNewPit(pit, SemitoneTransfer.getTN( tl.tones[tonename].pitch), pitch);
+            //pit = getNewPit(pit, SemitoneTransfer.getTN( tl.sunit[tonename].pitch), pitch);
             int[] oridata = tl.getTone(tonename);
             oridata= FToneAnalysis.getSoundPart(oridata);
-            int newlen = (int)((double)length / 1000 * NNAnalysis.samplingRate);
-            int[] newdata = getSound(oridata, pit, newlen);
+            int newlen = (int)((double)length / 1000 * NBankManager.samplingRate);
 
-            //if (newlen <= head)
-            //{
-            //    Array.Copy(ddata, 0, newdata, 0, newlen);
-            //}
-            //else if (newlen <= head + ddata.Length - foot)
-            //{
-            //    Array.Copy(ddata, 0, newdata, 0, head);
-            //    Array.Copy(ddata, ddata.Length - (newlen - head), newdata, head, newlen - head);
-            //}
-            //else
-            //{
-            //    Array.Copy(ddata, 0, newdata, 0, head);
+            int[] newdata = getChangeSoundTDPSOLA(oridata, pit, newlen);
 
-            //    int midoribegin = (int)(head + (foot - head) * begincut);
-            //    int midoriend = (int)(foot - (foot - head) * endcut);
-            //    int[] midori = new int[midoriend - midoribegin];
-            //    Array.Copy(ddata, head, midori, 0, midori.Length);
-            //    int midlen=newlen - (ddata.Length - foot ) - head;
-            //    int[] mid = getZipSound(midori, midlen, pit, overlapcut);
-            //    ////整形
-            //    //int[] midori2 = new int[foot - head];
-            //    //Array.Copy(ddata, head, midori2, 0, midori2.Length);
-            //    //int[,] envori = getEnvelope(midori2);
-            //    //for (int s = 0; s < 1; s++)
-            //    //{
-            //    //    int[,] env = getEnvelope(mid);
-            //    //    for (int i = 1; i < 101; i++)
-            //    //    {
-            //    //        if (env[i, 1] == 0) env[i, 1] = 1;
-            //    //        int dy = (envori[i, 1] - env[i, 1]) / 3;
-            //    //        for (int j = env[i - 1, 0]; j < env[i, 0]; j++)
-            //    //        {
-            //    //            mid[j] = (int)(mid[j] + (mid[j] > 0 ? dy : -dy));
-            //    //        }
-            //    //        //mid[i] = mid[i] + envo - env[i];
-            //    //    }
-            //    //}
-
-            //    Array.Copy(mid, 0, newdata, head, midlen);
-
-            //    Array.Copy(ddata, foot, newdata, newlen - (ddata.Length - foot), ddata.Length - foot);
-            //}
-
-            ////全局整形
-
-            //int dx = 1024;
-
-            //int nowx1 = 0;
-            //int nowx2 = 0;
-            //while (nowx1 < ddata.Length)
-            //{
-            //    float[] data1 = new float[dx];
-            //    float[] data2 = new float[dx];
-            //    float[] dataimag1 = new float[dx];
-            //    for (int i = 0; i < dx; i++) dataimag1[i] = 0;
-            //    float[] dataimag2 = new float[dx];
-            //    for (int i = 0; i < dx; i++) dataimag2[i] = 0;
-            //    for (int i = 0; i < dx; i++)
-            //    {
-
-            //        data1[i] = nowx1 + i < ddata.Length ? ddata[nowx1 + i] : 0;
-            //        data2[i] = nowx2 + i < newdata.Length ? (float)newdata[nowx2 + i] : 0;
-            //    }
-            //    TWFFT.FFT(data1, dataimag1);
-            //    TWFFT.FFT(data2, dataimag2);
-            //    int[,] envori = getEnvelope(data1);
-            //    int[,] env = getEnvelope(data2);
-            //    for (int i = 1; i < 101; i++)
-            //    {
-            //        if (env[i, 1] == 0) env[i, 1] = 1;
-            //        int dy = envori[i, 1] - env[i, 1];
-            //        for (int j = env[i - 1, 0]; j < env[i, 0]; j++)
-            //        {
-            //            data2[j] = (float)(data2[j] + dy);
-            //        }
-            //    }
-            //    TWFFT.IFFT(data2, dataimag2);
-            //    for (int i = 0; i < dx; i++)
-            //        if (nowx2 + i < newdata.Length)
-            //            newdata[nowx2 + i] = (int)data2[i];
-            //    nowx2 += dx;
-            //    nowx1 += (int)((double)dx * ddata.Length / newdata.Length);
-            //}
             return newdata;
 
 
         }
-
-
 
         /// <summary>
         /// 最接近它的右侧帧
@@ -172,7 +71,7 @@ namespace mySpeechSynthesizer
         /// <param name="frames"></param>
         /// <param name="nowloc"></param>
         /// <returns></returns>
-        private static int getClosestFrame(int[] frames, int nowloc)
+        private static int getCRFrame(int[] frames, int nowloc)
         {
             if (nowloc > frames[frames.Length - 1])
                 return frames.Length - 1;
@@ -188,7 +87,29 @@ namespace mySpeechSynthesizer
             return 0;
         }
 
-        private static FTone getClosestFTone(FTone[] ftones,int loc)
+        /// <summary>
+        /// 最接近它的左侧帧
+        /// </summary>
+        /// <param name="frames"></param>
+        /// <param name="nowloc"></param>
+        /// <returns></returns>
+        private static int getCLFrame(int[] frames, int nowloc)
+        {
+            if (nowloc > frames[frames.Length - 1])
+                return frames.Length - 1;
+            else if (nowloc > 0 && nowloc < frames[0])
+                return 0;
+            else
+            {
+                for (int i = 1; i < frames.Length; i++)
+                {
+                    if (nowloc >= frames[i - 1] && nowloc <= frames[i]) return i-1;
+                }
+            }
+            return 0;
+        }
+
+        private static Phone getClosestFTone(Phone[] ftones,int loc)
         {
             if (ftones.Length <= 0) return null;
             foreach(var ftone in ftones)
@@ -231,7 +152,7 @@ namespace mySpeechSynthesizer
         /// </summary>
         /// <param name="n"></param>
         /// <returns></returns>
-        private static int[] hanning(int[] n)
+        private static int[] Hanning(int[] n)
         {
             int N = n.Length;
             int[] res = new int[N];
@@ -245,6 +166,26 @@ namespace mySpeechSynthesizer
             return res;
         }
 
+        private static int[] antiHanning(int[] n)
+        {
+            int N = n.Length;
+            int[] res = new int[N];
+
+            int[] hanning = Hanning(n);
+            for(int i = 0; i < N; i++)
+            {
+                res[i] = (int)(n[i] /  hanning[i]);
+            }
+
+            return res;
+
+        }
+
+        /// <summary>
+        /// 三角窗
+        /// </summary>
+        /// <param name="n"></param>
+        /// <returns></returns>
         private static int[] triangle(int[] n)
         {
             int N = n.Length;
@@ -258,7 +199,7 @@ namespace mySpeechSynthesizer
 
         private static int[] getFChangeSound2(int[] oridata, double[] zip)
         {
-            int framelen = NNAnalysis.samplingRate / 100;
+            int framelen = NBankManager.samplingRate / 100;
             int windowlen = framelen * 2;
             int framenum = oridata.Length / framelen;
             double[] framezip = getZipPoint(framenum, zip);
@@ -310,6 +251,115 @@ namespace mySpeechSynthesizer
             return (int)(data[p1] + (target - p1) * (data[p2] - data[p1]));
         }
 
+        private static double getResampleValue(double[] data, double target)
+        {
+            int p1 = (int)target;
+            int p2 = p1 + 1;
+            if (target > data.Length/2 || target < 1) return 0;// data[data.Length - 1];
+            else return data[p1] + (target - p1) * (data[p2] - data[p1]);
+        }
+
+        /// <summary>
+        /// 用倒谱获得频谱包络
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        private static double[] GetEnvelopeFD(double[] data)
+        {
+            int n = data.Length;
+            double[] data1 = new double[n];
+            double[] data1i = new double[n];
+            for (int i = 0; i < n; i++) data1[i] = Math.Log(data[i]);
+            for (int i = 0; i < n; i++) data1i[i] = 0;
+            TWFFT.FFT(data1, data1i);
+            double therehold = 100;
+            double[] data2 = new double[n];
+            double[] data2i = new double[n];
+            // 低通滤波
+            for (int i = 0; i < n; i++)
+                if (i < therehold || i > n - therehold)
+                {
+                    data2[i] = data1[i]; 
+                    data2i[i] = data1i[i]; 
+                }
+                else
+                {
+                    data2[i] = 0;
+                    data2i[i] = 0;
+                }
+            //for (int i = 0; i < n; i++) data2i[i] = 0;
+            TWFFT.IFFT(data2, data2i);
+            var res = FToneAnalysis.MiddleFilter(data2, 5);
+            for (int i = 0; i < n; i++) res[i] = Math.Pow(Math.E, res[i]);
+            return res;
+        }
+
+
+
+        private static int[] ChangePitResutltFD(int[] data,double dpit)
+        {
+            // 傅里叶点数必须2的倍数
+            int n = FToneAnalysis.getmin2x(data.Length * 2);
+            n = 4096;
+            double[] ddata = new double[n];
+            for (int i = 0; i < n; i++) if (i < data.Length) ddata[i] = data[i]; else ddata[i] = 0;
+            double[] ddatai = new double[n];
+            for (int i = 0; i < n; i++) ddatai[i] = 0;
+            TWFFT.FFT(ddata, ddatai);
+            // ln(|X(n)|)
+            double[] ddatalnmod = new double[n];
+            for (int i = 0; i < n; i++) ddatalnmod[i] = Math.Sqrt(ddata[i] * ddata[i] + ddatai[i] * ddatai[i]);
+            // 根据倒谱获取频谱包络，即声道滤波器
+            var ddataenv = GetEnvelopeFD(ddatalnmod);
+            // double[] ddataenv = new double[n];
+            //for (int i = 0; i < n; i++) ddataenv[i] = Math.Pow(Math.E, ddatalnenv[i]);
+            // 除以包络，得到激励谱
+            double[] ddatabase = new double[n];
+            double[] ddataibase = new double[n];
+            for (int i = 0; i < n; i++) ddatabase[i] = ddata[i];/// ddataenv[i];
+            for (int i = 0; i < n; i++) ddataibase[i] = ddatai[i];/// ddataenv[i];
+            // 拉伸激励谱，得到新基频下的激励谱
+            double[] ddatabaser = new double[n];
+            double[] ddataibaser = new double[n];
+            // 对称共轭，所以分两半分别压缩
+            ddatabaser[0] = ddatabase[0];
+            ddataibaser[0] = ddataibase[0];
+            //dpit = 1.4;
+            for(int i = 1; i < n / 2; i++)
+            {
+                int j = (int)(i - 3000 * (dpit - 1));
+                if (j < 1 || j >= n / 2)
+                {
+                    ddatabaser[i] = 0;
+                    ddataibaser[i] = 0;
+                }
+                else
+                {
+                    ddatabaser[i] = ddatabase[j];
+                    ddataibaser[i] = ddataibase[j];
+                }
+                ddatabaser[n - i] = ddatabaser[i];
+                ddataibaser[n - i] = -ddataibaser[i];
+            }
+            //for(int i = 1; i <= n/2; i++)
+            //{
+            //    ddatabaser[i] = getResampleValue(ddatabase, (double)i / dpit);
+            //    ddatabaser[n - i] = ddatabaser[i];
+            //    ddataibaser[i] = getResampleValue(ddataibase, (double)i / dpit);
+            //    ddataibaser[n - i] = -ddataibaser[i];
+            //}
+            // 激励谱与包络相乘，重建频谱
+            double[] ddatar = new double[n];
+            double[] ddatair = new double[n];
+            for (int i = 0; i < n; i++) ddatar[i] = ddatabaser[i];//* ddataenv[i];
+            for (int i = 0; i < n; i++) ddatair[i] = ddataibaser[i]; //* ddataenv[i];
+            TWFFT.IFFT(ddatar, ddatair);
+            // int结果
+            int[] datar = new int[data.Length];
+            for (int i = 0; i < data.Length; i++) datar[i] = (int)ddatar[i];
+            return datar;
+        }
+
         /// <summary>
         /// 离此位置最近的基音序号
         /// </summary>
@@ -354,95 +404,332 @@ namespace mySpeechSynthesizer
             return index;
         }
 
-        /// <summary>
-        /// PSOLA法合成
-        /// </summary>
-        /// <param name="oridata"></param>
-        /// <param name="zip"></param>
-        /// <param name="length"></param>
-        /// <returns></returns>
-        private static int[] getChangeSound2(int[] oridata, double[] zip,int length)
+        private static int[][] getCutPair(int[] oricut, int orilen,int tarlen,double[][] zip=null)
         {
-            // 获取基音分割结果
-            int[] cut = FToneAnalysis.cutIt(oridata);
+            List<int[]> res = new List<int[]>();
 
-            int framenum = cut.Length-1;
-
-            // 获取逐帧频率压缩因子，用于接下来获取指定位置的压缩因子
-            double[] framezip = getZipPoint(oridata.Length, zip);
-
-            int[] res = new int[length];
-
-            //将开头段先放进去再说
-            //Array.Copy(oridata, 0, res, 0, Math.Min(length, cut[1]));
-
-            int fbegin = cut[0];
-            int fend = cut[1];
-            double nowpos = 0;
-            int respos = 0;
-            //对小段重采样
-            int i = 1;
-            while (i < framenum)
+            double tarp = 0;
+            while (tarp < tarlen)
             {
-                fbegin = cut[i - 1];
-                fend = cut[i];
-
-                int thislen = fend - fbegin;
-                fbegin -= thislen / 2;
-                fend += thislen / 2;
-
-
-                double nowzip = 1 / Math.Max(framezip[Math.Max(fbegin, 0)], 0.1);
-
-                //reset nowpos
-                nowpos = fbegin;
-                List<int> tmp = new List<int>();
-                while (nowpos < fend)
-                {
-                    int val = getResampleValue(oridata, nowpos);
-                    tmp.Add(val);
-                    nowpos += nowzip;
-                }
-                // 滤波
-                int[] tmp2 = MiddleFilterCorrection( tmp.ToArray(), 0, tmp.Count, oridata, Math.Max(0,fbegin), fend);
-                //tmp2 = FToneAnalysis.FrequencyFilter(tmp2, 0, 15000);
-                // 用汉宁窗合并
-                //var hanningtmp = tmp.ToArray();
-                var hanningtmp = hanning(tmp2.ToArray());
-                for (int j = 0; j < hanningtmp.Length; j++)
-                {
-                    if (respos + j - cut[i - 1] + fbegin >= res.Length)
-                    {
-                        break;
-                    }
-                    else if (respos+j - cut[i - 1] + fbegin >= 0)
-                    {
-                        res[respos + j - cut[i - 1] + fbegin] += hanningtmp[j];
-                        //respos++;
-                    }
-                }
-                // 做中值平滑
-                int width = thislen/2;
-                int phstart = Math.Max(0, respos - width);
-                int phlen = Math.Min(res.Length - phstart, width * 2);
-                int[] phdata = new int[phlen];
-                Array.Copy(res, phstart, phdata, 0, phlen);
-                phdata = FToneAnalysis.MiddleFilter(phdata, 3);
-                //phdata = FToneAnalysis.MiddleFilter(phdata, 5);
-                Array.Copy(phdata, 0, res, phstart, phlen);
-
-
-                respos += hanningtmp.Length / 2;
-
-
-                i = getNearestFrameIndex(oridata.Length, length, cut, respos);
-
-
+                int orip = (int)(tarp * orilen / tarlen);
+                int lf = getCLFrame(oricut, orip);
+                //frame1只用一遍
+                if (lf == 0 && tarp > 0) lf += 1;
+                int rf = Math.Min(lf + 1, oricut.Length - 1);
+                int oristart = oricut[lf];
+                int oriend = oricut[rf];
+                if (lf == rf) oriend = orilen ;
+                res.Add(new int[3] { oristart, (int)tarp, oriend-oristart });
+                tarp += (oriend - oristart) / getZipValue(zip, tarp / tarlen);
             }
-            return res;
+            return res.ToArray();
         }
 
 
+        private static double getZipValue(double[][] zip, double tar)
+        {
+            if (zip == null) return 1;
+            if (tar <= 0 || tar >= 1) return 1;
+            for(int i = 0; i < zip.Length; i++)
+            {
+                double x1 = zip[i][0];
+                double x2 = i < zip.Length - 1 ? zip[i + 1][0] : 1;
+                double y1 = zip[i][1];
+                double y2 = i < zip.Length - 1 ? zip[i + 1][1] : 1;
+                if (i == 0 && x1 > tar) return 1 + (y1 - 1) * (tar / x1);
+                //else if (i == zip.Length - 1 && x <= tar) return y + (1 - y) * ((tar - x) / (1 - x));
+                else if (tar >= x1 && tar < x2) return y1 + (y2 - y1) * ((tar - x1) / (x2 - x1));
+            }
+            return 1;
+        }
+
+
+        private static int[] getChangeSoundFDPSOLA(int[] oridata,double[][] zip,int tarlength)
+        {
+            int[] oricut = FToneAnalysis.cutIt(oridata);
+            int[] resdata = new int[tarlength];
+            int orilength = oridata.Length;
+            int[][] rescut = getCutPair(oricut, orilength, tarlength);
+            int overlaplen = 0;
+            for(int i = 0; i < rescut.Length; i++)
+            {
+                int oristart = rescut[i][0];
+                int tarstart = rescut[i][1];
+                int orilen = rescut[i][2];
+                int[] pitcdata = new int[orilen + overlaplen * 2];
+                double pitc = getZipValue(zip, (double)i * zip.Length / rescut.Length);
+                    
+                for(int j = 0; j < pitcdata.Length; j++)
+                {
+                    int p = oristart + j - overlaplen;
+                    if (p < 0 || p>=oridata.Length) pitcdata[j] = 0;
+                    else pitcdata[j] = oridata[p];
+                }
+                pitcdata = ChangePitResutltFD(pitcdata, pitc);
+                for (int j = 0; j < orilen; j++)
+                {
+                    int p = tarstart + j - overlaplen;
+                    if (j < overlaplen && i != 0)
+                    {
+                        resdata[p] =
+                            (int)(resdata[p] * (1 - (double)j / overlaplen)
+                            + pitcdata[j] * (double)j / overlaplen);
+                    }
+                    else if  ( p>=0 && p < resdata.Length)
+                    {
+                        resdata[p] = pitcdata[j];
+                    }
+                }
+            }
+
+            return resdata;
+        }
+
+        private static void repairWaveShape(int[] oridata,int[] tardata)
+        {
+            int n = FToneAnalysis.getmin2x(oridata.Length);
+            double[] odata = new double[n];
+            double[] odatai = new double[n];
+            for(int i = 0; i < n; i++)
+            {
+                if (i < oridata.Length) odata[i] = oridata[i];
+                else odata[i] = 0;
+                odatai[i] = 0;
+            }
+            TWFFT.FFT(odata, odatai);
+            double[] odatamod = new double[n];
+            for (int i = 0; i < n; i++) odatamod[i] = Math.Sqrt(odata[i] * odata[i] + odatai[i] * odatai[i]);
+            var odataenv = GetEnvelopeFD(odatamod);
+
+            double[] tdata = new double[n];
+            double[] tdatai = new double[n];
+            for (int i = 0; i < n; i++)
+            {
+                if (i < tardata.Length) tdata[i] = tardata[i];
+                else tdata[i] = 0;
+                tdatai[i] = 0;
+            }
+            TWFFT.FFT(tdata, tdatai);
+            double[] tdatamod = new double[n];
+            for (int i = 0; i < n; i++) tdatamod[i] = Math.Sqrt(tdata[i] * tdata[i] + tdatai[i] * tdatai[i]);
+            var tdataenv = GetEnvelopeFD(tdatamod);
+
+            for(int i = 1; i < n/2; i++)
+            {
+                //if (odataenv[i] >= tdataenv[i]) continue;
+                tdata[i] = tdata[i] * (odataenv[i] / tdataenv[i]);
+                tdatai[i] = tdatai[i] * (odataenv[i] / tdataenv[i]);
+                tdata[n - i] = tdata[i];
+                tdatai[n - i] = tdatai[i];
+            }
+            TWFFT.IFFT(tdata, tdatai);
+            for(int i = 0; i < tardata.Length; i++)
+            {
+                tardata[i] = (int)tdata[i];
+            }
+        }
+
+        /// <summary>
+        /// TD-PSOLA法合成
+        /// </summary>
+        /// <param name="oridata"></param>
+        /// <param name="zip"></param>
+        /// <param name="tarlength"></param>
+        /// <returns></returns>
+        private static int[] getChangeSoundTDPSOLA(int[] oridata, double[][] zip,int tarlength)
+        {
+            int[] oricut = FToneAnalysis.cutIt(oridata);
+            int[] resdata = new int[tarlength];
+            int orilength = oridata.Length;
+            int[][] rescut = getCutPair(oricut, orilength, tarlength,zip);
+            //int overlaplen = 20;
+            double k = (double)tarlength / orilength;
+
+            for (int i = 0; i < rescut.Length; i++)
+            {
+                int oristart = rescut[i][0];
+                int tarstart = rescut[i][1];
+                int orilen = rescut[i][2];
+
+                int laplen = orilen * 2;
+                int orilapstart = oristart - laplen / 2;
+                int tarlapstart = tarstart - laplen / 2;
+                int[] oriframe = new int[laplen];
+                for(int j = 0; j < laplen; j++)
+                {
+                    if (orilapstart + j < 0 || orilapstart+j>= orilength) oriframe[j] = 0;
+                    else oriframe[j] = oridata[orilapstart + j];
+                }
+                var oriframeh = Hanning(oriframe);
+                for(int j = 0; j < laplen; j++)
+                {
+                    if (tarlapstart + j < 0 || tarlapstart + j >= tarlength) continue;
+                    else
+                    {
+                        resdata[tarlapstart+j] += oriframeh[j];
+                    }
+                }
+                
+            }
+            int[] resdata2 = new int[tarlength];
+            for (int i = 0; i < tarlength; i++) resdata2[i] = 0;
+            int framelen = 1024;
+            for (int i = 0; i < tarlength; i += framelen / 2)
+            {
+                int[] od = new int[framelen];
+                int[] td = new int[framelen];
+                for (int j = 0; j < framelen; j++)
+                {
+                    int d = (int)((double)i*orilength / tarlength)+j;
+                    if (d >= oridata.Length) d = oridata.Length - framelen - 1 + j;
+                    if (i + j >= tarlength) { td[j] = 0; continue; }
+                    od[j] = oridata[d];
+                    td[j] = resdata[i + j];
+                }
+                //od = Hanning(od);
+                //td = Hanning(td);
+                repairWaveShape(od, td);
+                //td = antiHanning(td);
+                for (int j = 0; j < framelen; j++)
+                {
+                    int d = i + j;
+                    if (d >= tarlength) break;
+                    if (j < framelen / 2) resdata2[d] = (int)(resdata2[d] * (1 - (double)j * 2 / framelen) + td[j] * ((double)j * 2 / framelen));
+                    else
+                        resdata2[d] += td[j];
+                }
+            }
+
+            return resdata;
+
+
+
+            //int framenum = cut.Length-1;
+
+            //// 获取逐帧频率压缩因子，用于接下来获取指定位置的压缩因子
+            //double[] framezip = getZipPoint(oridata.Length, zip);
+
+            //int[] res = new int[length];
+
+            ////将开头段先放进去再说
+            ////Array.Copy(oridata, 0, res, 0, Math.Min(length, cut[1]));
+
+            //int fbegin = cut[0];
+            //int fend = cut[1];
+            //double nowpos = 0;
+            //int respos = 0;
+            ////对小段重采样
+            //int i = 1;
+            //while (i < framenum)
+            //{
+            //    fbegin = cut[i - 1];
+            //    fend = cut[i];
+
+            //    int thislen = fend - fbegin;
+            //    fbegin -= thislen / 2;
+            //    fend += thislen / 2;
+
+
+            //    double nowzip = 1 / Math.Max(framezip[Math.Max(fbegin, 0)], 0.1);
+
+            //    //reset nowpos
+            //    nowpos = fbegin;
+            //    List<int> tmp = new List<int>();
+            //    while (nowpos < fend)
+            //    {
+            //        int val = getResampleValue(oridata, nowpos);
+            //        tmp.Add(val);
+            //        nowpos += nowzip;
+            //    }
+            //    // 滤波
+            //    int[] tmp2 = MiddleFilterCorrection( tmp.ToArray(), 0, tmp.Count, oridata, Math.Max(0,fbegin), fend);
+            //    //tmp2 = FToneAnalysis.FrequencyFilter(tmp2, 0, 15000);
+            //    // 用汉宁窗合并
+            //    //var hanningtmp = tmp.ToArray();
+            //    var hanningtmp = hanning(tmp2.ToArray());
+            //    for (int j = 0; j < hanningtmp.Length; j++)
+            //    {
+            //        if (respos + j - cut[i - 1] + fbegin >= res.Length)
+            //        {
+            //            break;
+            //        }
+            //        else if (respos+j - cut[i - 1] + fbegin >= 0)
+            //        {
+            //            res[respos + j - cut[i - 1] + fbegin] += hanningtmp[j];
+            //            //respos++;
+            //        }
+            //    }
+            //    // 做中值平滑
+            //    int width = thislen/2;
+            //    int phstart = Math.Max(0, respos - width);
+            //    int phlen = Math.Min(res.Length - phstart, width * 2);
+            //    int[] phdata = new int[phlen];
+            //    Array.Copy(res, phstart, phdata, 0, phlen);
+            //    phdata = FToneAnalysis.MiddleFilter(phdata, 3);
+            //    //phdata = FToneAnalysis.MiddleFilter(phdata, 5);
+            //    Array.Copy(phdata, 0, res, phstart, phlen);
+
+
+            //    respos += hanningtmp.Length / 2;
+
+
+            //    i = getNearestFrameIndex(oridata.Length, length, cut, respos);
+
+
+            //}
+            //return res;
+        }
+
+        private static int[] getChangeSoundUTAU(int[] oridata, double[][] zip, int tarlength)
+        {
+            int[] oricut = FToneAnalysis.cutIt(oridata);
+            int[] resdata = new int[tarlength];
+            int orilength = oridata.Length;
+            int[][] rescut = getCutPair(oricut, orilength, tarlength, zip);
+            int overlaplen = 0;
+            double k = (double)tarlength / orilength;
+
+            for (int i = 0; i < rescut.Length; i++)
+            {
+                int oristart = rescut[i][0];
+                int tarstart = rescut[i][1];
+                int orilen = rescut[i][2];
+                int[] pitcdata = new int[orilen + overlaplen * 2];
+
+                int laplen = orilen * 2;
+                int orilapstart = oristart - laplen / 2;
+                int tarlapstart = tarstart - laplen / 2;
+                int[] oriframe = new int[laplen];
+                for (int j = 0; j < laplen; j++)
+                {
+                    if (orilapstart + j < 0 || orilapstart + j >= orilength) oriframe[j] = 0;
+                    else oriframe[j] = oridata[orilapstart + j];
+                }
+                var oriframeh = Hanning(oriframe);
+                for (int j = 0; j < laplen; j++)
+                {
+                    if (tarlapstart + j < 0 || tarlapstart + j >= tarlength) continue;
+                    else resdata[tarlapstart + j] += oriframeh[j];
+                }
+
+            }
+
+            //int framelen = 4096;
+            //for(int i = 0; i < tarlength; i += framelen)
+            //{
+            //    int[] od = new int[framelen];
+            //    int[] td = new int[framelen];
+            //    for(int j = 0; j < framelen; j++)
+            //    {
+            //        int d = (int)(i * k) + j;
+            //        if (d >= oridata.Length) d = oridata.Length - framelen - 1 + j;
+            //        od[j] = oridata[d];
+            //        td[j] = resdata[i + j];
+            //    }
+            //}
+
+            return resdata;
+        }
 
         /// <summary>
         /// 频域修正
@@ -520,7 +807,7 @@ namespace mySpeechSynthesizer
                 int k = Math.Min(windowlen * 2, data.Length - nowpos);
                 oripos = (int)(nowpos * ((double)oridata.Length / data.Length));
                 var tmp = MiddleFilterCorrection(data, nowpos, nowpos + k, oridata, oripos, oripos + k);
-                tmp = hanning(tmp);
+                tmp = Hanning(tmp);
                 for(int i = 0; i < tmp.Length; i++)
                 {
                     res[nowpos + i] += tmp[i];
@@ -570,7 +857,7 @@ namespace mySpeechSynthesizer
             int[] res = new int[length];
 
             
-            int framelen = NNAnalysis.samplingRate / 100;
+            int framelen = NBankManager.samplingRate / 100;
             int framenum = length / framelen;
 
             double scale = (double)length / oridata.Length;
@@ -638,7 +925,7 @@ namespace mySpeechSynthesizer
                 while (nowloc < length)
                 {
                     int tmpnow = (int)(nowloc * scale);
-                    int nextframe = getClosestFrame(frame, tmpnow);
+                    int nextframe = getCRFrame(frame, tmpnow);
                     int framelen = getFrameLength(frame, nextframe);
                     if (nowloc > length - (oridata.Length - frame[frame.Length - 1]) / zips[nowloc])
                     {
@@ -827,34 +1114,5 @@ namespace mySpeechSynthesizer
             return res;
         }
 
-
-        /// <summary>
-        /// 合成
-        /// </summary>
-        /// <param name="origin"></param>
-        /// <param name="newlen"></param>
-        /// <param name="pit"></param>
-        /// <param name="rbegin"></param>
-        /// <param name="rend"></param>
-        /// <returns></returns>
-        private static int[] getSound(int[] oridata, double[] pit,int length)
-        {
-            
-            int[] res = oridata;
-            
-            //double[] zips = HanSynthesis.getZipPoint(oridata.Length, pit);
-            //变调
-            res = getChangeSound2(res, pit,length);
-            //变长
-            //int[] res = getWChangeSound1(oridata, length);
-            //int[] res = getChangeSoundOld(oridata, pit, length);
-            res = FToneAnalysis.MiddleFilter(res, 3);
-            //res = getFCorrection(oridata, res);
-            
-           // res = FToneAnalysis.MiddleFilter(res, 3);
-            //res = FToneAnalysis.FrequencyFilter(res, 60, 9000);
-
-            return res;
-        }
     }
 }

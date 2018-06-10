@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
+using mySpeechSynthesizer.NNLink;
 
 namespace mySpeechSynthesizer
 {
@@ -18,7 +19,7 @@ namespace mySpeechSynthesizer
     /// </summary>
     public class SoundAnalysis
     {
-        public ToneList tl;
+        public Bank tl;
         public SoundAnalysis()
         {
 
@@ -28,10 +29,26 @@ namespace mySpeechSynthesizer
         /// 初始化音源
         /// </summary>
         /// <param name="directory"></param>
-        public void init(string directory,SourceType type)
+        public void init(string directory, SourceType type)
         {
 
-            this.tl = analysisAll(directory,type);
+            this.tl = analysisAll(directory, type);
+        }
+
+        /// <summary>
+        /// 自动判断音源类型，初始化音源
+        /// </summary>
+        /// <param name="directory"></param>
+        public void init(string directory)
+        {
+            if (File.Exists(directory + "/voice.d"))
+            {
+                init(directory, SourceType.Niaoniao);
+            }
+            else
+            {
+                init(directory, SourceType.UTAU);
+            }
         }
 
         
@@ -94,10 +111,10 @@ namespace mySpeechSynthesizer
         {
             List<NNTone> tones = new List<NNTone>();
 
-            foreach (var t in tl.tones)
+            foreach (var t in tl.sunit)
             {
                 string name = t.Key;
-                ToneUnit ft = t.Value;
+                Syllable ft = t.Value;
                 NNTone tone = new NNTone();
                 tone.name = name;
                 tone.begin = ft.begin;
@@ -116,16 +133,16 @@ namespace mySpeechSynthesizer
         /// <param name="path"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static ToneList analysisAll(string path, SourceType type)
+        public static Bank analysisAll(string path, SourceType type)
         {
-            ToneList tl = new ToneList(new byte[] { });
+            Bank tl = new Bank(new byte[] { });
             switch (type)
             {
                 case SourceType.Niaoniao:
-                    tl = NNAnalysis.getToneList(path);
+                    tl = NBankManager.getToneList(path);
                     break;
                 case SourceType.UTAU:
-                    tl = UTAUAnalysis.getToneList(path);
+                    tl = UTAULink.UBankManager.getToneList(path);
                     break;
                 case SourceType.Vocaloid:
                 default:
@@ -168,7 +185,7 @@ namespace mySpeechSynthesizer
         /// <param name="pit"></param>
         /// <param name="length"></param>
         /// <returns></returns>
-        private static int[] synthesis(ToneList tl,string name,double[] pit,int length,double pitch)
+        private static int[] synthesis(Bank tl,string name,double[][] pit,int length,double pitch)
         {
             int[] res = WidthSynthesis.getWAVdata(tl, name, pit, length,pitch);
             
